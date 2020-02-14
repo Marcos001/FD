@@ -6,8 +6,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QMainWindow, \
     QApplication, QWidget, \
     QPushButton, QHBoxLayout, QVBoxLayout, QRadioButton, QLabel, QCheckBox, QDesktopWidget, QSpacerItem, QSizePolicy, \
-    QFileDialog
-
+    QFileDialog, QComboBox
 
 #from validate_matches import fix_bounds
 from mtcnn import MTCNN
@@ -26,6 +25,14 @@ class JanelaPrincipal(QMainWindow):
 
         self.initUI()
 
+        # other instances
+        self.view_image = view()
+
+        self.add_Widgets()
+
+        self.model_cv2 = None
+        self.model_mt_cnn = None
+
 
 
     def initUI(self):
@@ -34,30 +41,41 @@ class JanelaPrincipal(QMainWindow):
         '''
         self.resize(1200, 700)
         self.setWindowTitle('Face Detection')
-        self.add_Widgets()
         self.center()
         self.show()
+
+
+    def type_model_FD(self):
+
+
+        self.cb_types_fd = QComboBox()
+        self.cb_types_fd.addItems(['OpenCV', 'MTCNN'])
+
+        self.bt_open_image = QPushButton('Abrir Imagem')
+
+        layout = QHBoxLayout()
+        layout.setAlignment(Qt.AlignLeft)
+        layout.addWidget(QLabel('Tipo de Detector de Face:'))
+        layout.addWidget(self.cb_types_fd)
+        layout.addWidget(self.bt_open_image)
+
+
+        self.bt_open_image.clicked.connect(self.select_path_image)
+
+
+        return layout
+
+
 
 
 
     def add_Widgets(self):
 
-        # painel com a imagem
-        self.lb_image = QLabel('Face Detection')
-        self.lb_image.setAlignment(Qt.AlignHCenter)
-
-        self.view_image = view()
-
-        self.bt_open_image = QPushButton('Open Image')
-
         # painel com as opções
         self.main_layout = QVBoxLayout()
-        self.main_layout.addWidget(self.lb_image)
+        self.main_layout.addLayout(self.type_model_FD())
         self.main_layout.addWidget(self.view_image)
         self.main_layout.addItem(QSpacerItem(5, 10, QSizePolicy.Minimum, QSizePolicy.Minimum))
-        self.main_layout.addWidget(self.bt_open_image)
-
-        self.bt_open_image.clicked.connect(self.select_path_image)
 
 
         self.main_panel = QWidget()
@@ -66,7 +84,27 @@ class JanelaPrincipal(QMainWindow):
 
         print('-' * 30)
         print('Loading model')
-        self.model = MTCNN()
+        #self.model = MTCNN()
+
+
+
+    def detect_cv2(self, image):
+
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        # Detect faces
+        faces = self.model_cv2.detectMultiScale(gray, 1.1, 4)
+        # Draw rectangle around the faces
+        for (x, y, w, h) in faces:
+            cv2.rectangle(image, (x, y), (x + w, y + h), (255, 0, 0), 2)
+        # Display the output
+
+        # self.view_image.plot_face_image_cv2(image, faces)
+
+        cv2.imshow('img', image)
+        cv2.waitKey()
+        cv2.destroyAllWindows()
+
+        #self.view_image.plot_face_image_cv2(image, faces)
 
 
     def select_path_image(self):
@@ -77,11 +115,19 @@ class JanelaPrincipal(QMainWindow):
         # load image
         image = cv2.imread(self.path_image)
 
-        # detectar a face com o modelo
 
-        faces = self.model.detect_faces(image)
+        # selection of models for face detection
 
-        self.view_image.plot_face_image(image, faces)
+        if self.cb_types_fd.currentText() == 'OpenCV':
+
+            if self.model_cv2 == None:
+                self.model_cv2 = cv2.CascadeClassifier('data/haarcascade_frontalcatface_extended.xml')
+                print('modelo instanciado cv2')
+            self.detect_cv2(image)
+        else:
+            print('MTCNN ainda não carregado')
+
+
 
         # print('results > ', faces)
         #

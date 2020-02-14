@@ -81,6 +81,23 @@ class Visualization(QWidget):
         self.grafico_canvas.draw()
 
 
+    def plot_face_image_cv2(self, array_numpy, faces):
+
+        self.grafico_canvas.axes.cla()
+        self.grafico_canvas.axes.axis('off')
+        self.grafico_canvas.axes.imshow(cv2.cvtColor(array_numpy, cv2.COLOR_BGR2RGB))
+
+        # for each face, draw a rectangle based on coordinates
+        for (x, y, w, h) in faces:
+            face_border = Rectangle((x, y), (x+w), (y+h),
+                                    linewidth=3,
+                                    fill=False,
+                                    color='red')
+
+            self.grafico_canvas.axes.add_patch(face_border)
+        self.grafico_canvas.draw()
+
+
 
 def highlight_faces(image_path, faces):
   # display image
