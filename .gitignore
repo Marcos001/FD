@@ -1,0 +1,6 @@
+
+# cache folder
+__pycache__/
+
+# config ide
+.idea/
